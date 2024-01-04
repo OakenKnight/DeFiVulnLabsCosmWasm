@@ -16,14 +16,18 @@ const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
     deps: DepsMut,
-    env: Env,
-    info: MessageInfo,
+    _env: Env,
+    _info: MessageInfo,
     msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
+
+    let mut black_list : Vec<Addr>= vec![deps.api.addr_validate(&msg.owner)?];
+    black_list.append(&mut msg.black_list.unwrap_or(vec![]));
+
     store_config(deps.storage, &Config {
         owner:  deps.api.addr_validate(&msg.owner)?,
-        black_list:vec![deps.api.addr_validate(&msg.owner)?]
+        black_list: black_list
     })?;
     Ok(Response::default())
 }
@@ -39,6 +43,7 @@ pub fn execute(
         ExecuteMsg::Withdraw { destination } => execute_withdraw(deps, env, info, destination),
     }
 }
+
 fn execute_withdraw(
     deps: DepsMut,
     env: Env,
@@ -50,15 +55,15 @@ fn execute_withdraw(
         return Err(ContractError::Unauthorized{});
     }
     let black_list= config.black_list;
-    let destination = Addr::unchecked(destination);
+    let destination =deps.api.addr_validate(&destination)?;
+
     if black_list.iter().any(|addr| addr==&destination) {
-        return Err(ContractError::Unauthorized{});
-}
+        return Err(ContractError::BlackListed  {});
+    }
     
-    let destination =destination.to_string().to_lowercase();
     let contract_address = env.contract.address;
     let amount = deps.querier.query_all_balances(&contract_address)?;
-    Ok(send_tokens(destination, amount, "approve"))
+    Ok(send_tokens(destination.to_string(), amount, "approve"))
   }
 
   fn send_tokens(to_address: String, amount: Vec<Coin>, action: &str) -> Response {

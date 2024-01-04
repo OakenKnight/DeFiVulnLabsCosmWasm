@@ -11,4 +11,7 @@ pub enum ContractError {
 
     #[error("MissingData")]
     MissingData {},
+
+    #[error("BlackListed")]
+    BlackListed {},
 }
