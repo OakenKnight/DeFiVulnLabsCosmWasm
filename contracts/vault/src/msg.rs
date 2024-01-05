@@ -37,6 +37,6 @@ pub struct ConfigResponse {
 }
 #[cw_serde]
 pub struct UserResponse {
-    pub ammount: Uint128,
+    pub amount: Uint128,
 }
 

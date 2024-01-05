@@ -1,8 +1,7 @@
-use std::error::Error;
 
 use cosmwasm_std::{
-    entry_point, to_binary, Addr, BankMsg, Binary, Coin, Deps, DepsMut, Env, MessageInfo, Response,
-    StdResult, StdError, from_binary, Uint128,
+    entry_point, to_binary, Addr, Deps, DepsMut, Env, MessageInfo, Response,
+    StdResult, StdError, from_binary, Binary
 };
 
 use crate::error::ContractError;
@@ -10,7 +9,7 @@ use crate::msg::{InstantiateMsg, QueryMsg, ExecuteMsg, ConfigResponse, Cw20HookM
 use crate::state::{Config, CONFIG, USER_INFO, UserInfo};
 use crate::assets::{VaultInfo, AssetInfo};
 use cw2::set_contract_version;
-use cw20::{Cw20ExecuteMsg, Cw20ReceiveMsg};
+use cw20::Cw20ReceiveMsg;
 
 // Version info, for migration info
 const CONTRACT_NAME: &str = "crates.io:cw20-merkle-airdrop";
@@ -66,7 +65,7 @@ pub fn execute(
 
     pub fn receive_cw20(
         deps: DepsMut,
-        env: Env,
+        _env: Env,
         info: MessageInfo,
         cw20_msg: Cw20ReceiveMsg,
     ) -> Result<Response, ContractError> {
@@ -87,14 +86,11 @@ pub fn execute(
                 }
                 let cw20_sender = deps.api.addr_validate(&cw20_msg.sender)?;
 
-                //Bad implementation
-                USER_INFO.save(deps.storage, &cw20_sender, &UserInfo {amount: cw20_msg.amount })?;
-                //Good inplementation
-                // USER_INFO.update(deps.storage, &cw20_sender, |user_info:Option<UserInfo>| -> StdResult<_>{
-                //     let mut info = user_info.unwrap_or(UserInfo { amount: 0u128.into()});
-                //     info.amount = info.amount + cw20_msg.amount;
-                //     Ok(info)
-                // })?; 
+                USER_INFO.update(deps.storage, &cw20_sender, |user_info:Option<UserInfo>| -> StdResult<_>{
+                    let mut info = user_info.unwrap_or(UserInfo { amount: 0u128.into()});
+                    info.amount = info.amount + cw20_msg.amount;
+                    Ok(info)
+                })?; 
                 
                 Ok(Response::new()) 
           
@@ -123,6 +119,6 @@ fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
 fn query_user(deps: Deps, user_addr:Addr) -> StdResult<UserResponse> {
 
     let user_info = USER_INFO.load(deps.storage, &user_addr)?;
-    let ammout = user_info.amount;
-    Ok(UserResponse{ ammount: ammout })
+    let amout = user_info.amount;
+    Ok(UserResponse{ amount: amout })
 }
