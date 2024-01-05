@@ -16,7 +16,7 @@ const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
     deps: DepsMut,
-    env: Env,
+    _env: Env,
     _info: MessageInfo,
     msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
@@ -27,6 +27,8 @@ pub fn instantiate(
         owner: deps.api.addr_validate(&msg.owner)?,
     };
     CONFIG.save(deps.storage, &config)?;
+    MARKETS.save(deps.storage, &msg.markets)?;
+
     Ok(Response::default())
 }
 
@@ -34,7 +36,7 @@ pub fn instantiate(
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn execute(
     deps: DepsMut,
-    env: Env,
+    _env: Env,
     info: MessageInfo,
     msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
@@ -74,11 +76,12 @@ pub fn deposit_funds(
         if info.funds.len() != 0 {
             return Err(ContractError::FundsError{});
         }
+        
         MARKETS.update(deps.storage, |mut markets| -> StdResult<Vec<String>>
-        {
-            markets.push(market);
-            Ok(markets)
-        }
+            {
+                markets.push(market);
+                Ok(markets)
+            }
         )?;
 
         Ok(Response::new())
