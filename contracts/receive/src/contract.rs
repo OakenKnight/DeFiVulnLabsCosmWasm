@@ -3,7 +3,7 @@ use cosmwasm_std::{
     StdResult, Uint128, from_binary, CosmosMsg, WasmMsg
 };
 
-use crate::error::{ContractError};
+use crate::error::ContractError;
 use crate::msg::{ExecuteMsg, InstantiateMsg, QueryMsg, OwnerResponse, StakeResponse, Cw20HookMsg};
 use crate::state::{Config, StakerInfo, store_staker_info, read_staker_info, read_config, store_config};
 use cw2::set_contract_version;
@@ -16,8 +16,8 @@ const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
     deps: DepsMut,
-    env: Env,
-    info: MessageInfo,
+    _env: Env,
+    _info: MessageInfo,
     msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
@@ -36,7 +36,6 @@ pub fn execute(
     msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
     match msg {
-
         ExecuteMsg::Withdraw { destination } => execute_withdraw(deps, env, info, destination),
         ExecuteMsg::UpdateConfig {owner, token } => execute_update(deps, env, info, owner, token),
         ExecuteMsg::Receive(msg) => receive_cw20(deps, env, info, msg),
@@ -44,9 +43,9 @@ pub fn execute(
 }
 fn execute_withdraw(
     deps: DepsMut,
-    env: Env,
+    _env: Env,
     info: MessageInfo,
-    destination: String,
+    _destination: String,
   ) -> Result<Response, ContractError> {
     let config: Config = read_config(deps.storage)?;
     let staker_info: StakerInfo = read_staker_info(deps.storage, &info.sender)?;
@@ -70,7 +69,7 @@ fn execute_withdraw(
 
   fn execute_update(
     deps: DepsMut,
-    env: Env,
+    _env: Env,
     info: MessageInfo,
     owner: String,
     token: String,
@@ -102,10 +101,12 @@ pub fn receive_cw20(
 ) -> Result<Response, ContractError> {
     match from_binary(&cw20_msg.msg) {
         Ok(Cw20HookMsg::Stake {}) => {
+            let config : Config = read_config(deps.storage)?;
+
             // only owner can create allocation
-            // if config.token != info.sender {
-            //     return Err(ContractError::Unauthorized {});
-            // }
+            if config.token != info.sender {
+                return Err(ContractError::Unauthorized {});
+            }
 
             let cw20_sender = deps.api.addr_validate(&cw20_msg.sender)?;
             stake(deps, env, cw20_sender, cw20_msg.amount)
@@ -114,7 +115,12 @@ pub fn receive_cw20(
     }
 }
 
-pub fn stake(deps: DepsMut, env: Env, sender_addr: Addr, amount: Uint128) -> Result<Response, ContractError>  {
+pub fn stake(
+    deps: DepsMut, 
+    _env: Env, 
+    sender_addr: Addr, 
+    amount: Uint128
+) -> Result<Response, ContractError>  {
     let sender_addr: Addr = deps.api.addr_validate(sender_addr.as_str())?;
     let mut staker_info: StakerInfo = read_staker_info(deps.storage, &sender_addr)?;
     staker_info.staked_amount += amount;
