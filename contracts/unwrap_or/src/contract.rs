@@ -17,7 +17,7 @@ const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
     deps: DepsMut,
-    env: Env,
+    _env: Env,
     _info: MessageInfo,
     msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
@@ -36,7 +36,7 @@ pub fn instantiate(
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn execute(
     deps: DepsMut,
-    env: Env,
+    _env: Env,
     info: MessageInfo,
     msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
@@ -56,7 +56,6 @@ pub fn deposit_funds(
         if info.funds[0].denom != denom {
             return Err(ContractError::FundsError {});
         }
-     
 
         let usd_price = deps.querier
                 .query_wasm_smart::<PriceResponse>(
@@ -70,8 +69,9 @@ pub fn deposit_funds(
         //rest of the code
              
        
-        let response = Response::new();
-        Ok(response.add_attribute("calculated value", price_in_usd))
+        Ok(Response::new()
+            .add_attribute("calculated value", price_in_usd)
+        )
     }
 
 

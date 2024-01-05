@@ -33,8 +33,14 @@ fn mint_native(app: &mut App, beneficiary: String, denom: String, amount: u128) 
 
         mint_native(&mut app, "user".to_string(), "uatom".to_string(), 100);
      
-        let update_response = app.execute_contract(Addr::unchecked("user"), contract_addr.clone(), &ExecuteMsg::Deposit { denom: "uatom".to_owned() }, &[coin(100, "uatom")]);
-        assert_eq!(update_response.unwrap().events[1].attributes[1].value, "0");
+        let update_response = app.
+            execute_contract(
+                Addr::unchecked("user"), 
+                contract_addr.clone(), 
+                &ExecuteMsg::Deposit { denom: "uatom".to_owned() }, 
+                &[coin(100, "uatom")]
+            ).unwrap();
+        assert_eq!(update_response.events[1].attributes[1].value, "0");
    
         }
         
