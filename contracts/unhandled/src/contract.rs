@@ -14,8 +14,8 @@ const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
     deps: DepsMut,
-    env: Env,
-    info: MessageInfo,
+    _env: Env,
+    _info: MessageInfo,
     msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
     let config = Config {
@@ -58,13 +58,13 @@ fn execute_withdraw(
 
   fn execute_update(
     deps: DepsMut,
-    env: Env,
+    _env: Env,
     info: MessageInfo,
     new_owner: String,
   ) -> Result<Response, ContractError> {
     let config = CONFIG.load(deps.storage)?;
     let owner = deps.api.addr_validate(&config.owner.to_string())?;
-    check_authorization(info.sender,owner);
+    check_authorization(info.sender,owner)?;
     
       let new_config = Config {
         owner: deps.api.addr_validate(&new_owner)?,
